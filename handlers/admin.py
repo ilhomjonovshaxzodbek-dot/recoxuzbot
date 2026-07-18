@@ -266,8 +266,9 @@ async def admin_ban_receive(message: Message, state: FSMContext, bot: Bot):
 async def admin_bot_info_start(message: Message, state: FSMContext):
     await state.set_state(AdminState.waiting_bot_info)
     current = db.get_bot_info()
+    current_display = current or "(bo'sh)"
     await message.answer(
-        f"Joriy bot ma'lumoti:\n{current or '(bo\u2018sh)'}\n\nYangi matnni yuboring:",
+        f"Joriy bot ma'lumoti:\n{current_display}\n\nYangi matnni yuboring:",
         reply_markup=kb.cancel_kb(),
     )
 
