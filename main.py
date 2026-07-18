@@ -1,5 +1,8 @@
 import asyncio
 import logging
+import os
+import threading
+from http.server import BaseHTTPRequestHandler, HTTPServer
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
@@ -14,10 +17,33 @@ from scheduler import setup_scheduler
 from handlers import admin, projects, ai_chat, user
 
 
+class _HealthHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"OK")
+
+    def log_message(self, format, *args):
+        pass  # konsolni chalkashtirmaslik uchun health-check loglarini o'chiramiz
+
+
+def start_health_server():
+    """
+    Render.com (va shunga o'xshash) bepul 'Web Service' rejasi faqat
+    HTTP portini tinglaydigan servislarni bepul ushlab turadi.
+    Shuning uchun bot bilan bir vaqtda shu oddiy HTTP server ham ishga tushadi.
+    """
+    port = int(os.getenv("PORT", 8080))
+    server = HTTPServer(("0.0.0.0", port), _HealthHandler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+
+
 async def main():
     logging.basicConfig(level=logging.INFO)
 
     db.init_db()
+    start_health_server()
 
     bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     dp = Dispatcher(storage=MemoryStorage())
